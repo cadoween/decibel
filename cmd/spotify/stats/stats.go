@@ -15,7 +15,7 @@ import (
 	"github.com/cadoween/decibel/pkg/iox"
 )
 
-func artistsAction(ctx context.Context, c *cli.Command) error {
+func topArtistsAction(ctx context.Context, c *cli.Command) error {
 	logger := zerolog.Ctx(ctx)
 	dbPath := c.String("db")
 	verbose := c.Bool("verbose")
@@ -63,7 +63,7 @@ func artistsAction(ctx context.Context, c *cli.Command) error {
 	return nil
 }
 
-func tracksAction(ctx context.Context, c *cli.Command) error {
+func topTracksAction(ctx context.Context, c *cli.Command) error {
 	logger := zerolog.Ctx(ctx)
 	dbPath := c.String("db")
 	verbose := c.Bool("verbose")
@@ -106,6 +106,93 @@ func tracksAction(ctx context.Context, c *cli.Command) error {
 			track.PlayCount,
 			hours,
 			minutes,
+		)
+	}
+
+	return nil
+}
+
+func topAlbumsAction(ctx context.Context, c *cli.Command) error {
+	logger := zerolog.Ctx(ctx)
+	dbPath := c.String("db")
+	verbose := c.Bool("verbose")
+
+	if verbose {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
+	logger.Debug().
+		Str("db_path", dbPath).
+		Msg("Connecting to database")
+
+	db, err := ksqlite.New(ctx, dbPath, ksql.Config{})
+	if err != nil {
+		return fmt.Errorf("ksqlite.New: %w", err)
+	}
+	defer iox.Close(db, logger)
+
+	spotifySQLite := spotify.NewSQLite(db)
+
+	albums, err := spotifySQLite.GetTopAlbumsByPlayCount(ctx)
+	if err != nil {
+		return fmt.Errorf("spotifySQLite.GetTopAlbumsByPlayCount: %w", err)
+	}
+
+	_, _ = fmt.Printf("\nTop Albums by Play Count:\n\n")
+	_, _ = fmt.Printf("%-40s %-30s %-12s\n", "Album", "Artist", "Play Count")
+	_, _ = fmt.Printf("%s\n", strings.Repeat("-", 85))
+
+	for _, album := range albums {
+		_, _ = fmt.Printf("%-40s %-30s %-12d\n",
+			truncateString(album.Album, 40),
+			truncateString(album.Artist, 30),
+			album.Count,
+		)
+	}
+
+	return nil
+}
+
+func mostSkippedTracksAction(ctx context.Context, c *cli.Command) error {
+	logger := zerolog.Ctx(ctx)
+	dbPath := c.String("db")
+	verbose := c.Bool("verbose")
+
+	if verbose {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
+	logger.Debug().
+		Str("db_path", dbPath).
+		Msg("Connecting to database")
+
+	db, err := ksqlite.New(ctx, dbPath, ksql.Config{})
+	if err != nil {
+		return fmt.Errorf("ksqlite.New: %w", err)
+	}
+	defer iox.Close(db, logger)
+
+	spotifySQLite := spotify.NewSQLite(db)
+
+	skippedTracks, err := spotifySQLite.GetMostSkippedTracks(ctx)
+	if err != nil {
+		return fmt.Errorf("spotifySQLite.GetMostSkippedTracks: %w", err)
+	}
+
+	_, _ = fmt.Printf("\nMost Skipped Tracks (minimum 5 plays):\n\n")
+	_, _ = fmt.Printf("%-40s %-30s %-12s %-12s\n", "Track", "Artist", "Skip Count", "Skip Rate")
+	_, _ = fmt.Printf("%s\n", strings.Repeat("-", 97))
+
+	for _, track := range skippedTracks {
+		_, _ = fmt.Printf("%-40s %-30s %-12d %.1f%%\n",
+			truncateString(track.TrackName, 40),
+			truncateString(track.ArtistName, 30),
+			track.SkipCount,
+			track.SkipRate*100,
 		)
 	}
 

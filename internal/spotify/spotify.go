@@ -38,3 +38,16 @@ type TrackStats struct {
 	PlayCount       int64  `ksql:"play_count"`
 	TotalPlayTimeMS int64  `ksql:"total_play_time_ms"`
 }
+
+type AlbumStats struct {
+	Album  string `ksql:"master_metadata_album_album_name"`
+	Artist string `ksql:"master_metadata_album_artist_name"`
+	Count  int64  `ksql:"play_count"`
+}
+
+type TrackSkipStats struct {
+	TrackName  string  `ksql:"master_metadata_track_name"`
+	ArtistName string  `ksql:"master_metadata_album_artist_name"`
+	SkipCount  int     `ksql:"skip_count"`
+	SkipRate   float64 `ksql:"skip_rate"`
+}

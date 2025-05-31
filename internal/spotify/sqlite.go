@@ -132,3 +132,47 @@ func (s *SQLite) GetTopTracksByPlayTime(ctx context.Context) ([]TrackStats, erro
 
 	return results, nil
 }
+
+func (s *SQLite) GetTopAlbumsByPlayCount(ctx context.Context) ([]AlbumStats, error) {
+	query := `
+		SELECT
+			master_metadata_album_album_name,
+			master_metadata_album_artist_name,
+			COUNT(*) AS play_count
+		FROM spotify_streams
+		WHERE master_metadata_album_album_name IS NOT NULL
+		GROUP BY master_metadata_album_album_name, master_metadata_album_artist_name
+		ORDER BY play_count DESC
+		LIMIT 10
+	`
+
+	var results []AlbumStats
+	if err := s.sqlProvider.Query(ctx, &results, query); err != nil {
+		return nil, fmt.Errorf("s.sqlProvider.Query: %w", err)
+	}
+
+	return results, nil
+}
+
+func (s *SQLite) GetMostSkippedTracks(ctx context.Context) ([]TrackSkipStats, error) {
+	query := `
+		SELECT
+			master_metadata_track_name,
+			master_metadata_album_artist_name,
+			SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS skip_count,
+			CAST(SUM(CASE WHEN skipped THEN 1 ELSE 0 END) AS FLOAT) / COUNT(*) AS skip_rate
+		FROM spotify_streams
+		WHERE master_metadata_track_name IS NOT NULL
+		GROUP BY master_metadata_track_name, master_metadata_album_artist_name
+		HAVING COUNT(*) > 5
+		ORDER BY skip_rate DESC
+		LIMIT 25
+	`
+
+	var results []TrackSkipStats
+	if err := s.sqlProvider.Query(ctx, &results, query); err != nil {
+		return nil, fmt.Errorf("s.sqlProvider.Query: %w", err)
+	}
+
+	return results, nil
+}

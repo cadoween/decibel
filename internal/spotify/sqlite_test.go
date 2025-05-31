@@ -156,3 +156,66 @@ func TestSQLite_GetTopArtistsByPlayTime(t *testing.T) {
 		})
 	}
 }
+
+func TestSQLite_GetMostSkippedTracks(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.TODO()
+
+	tests := []struct {
+		name    string
+		mock    func(*ksqltest.MockProvider)
+		want    []spotify.TrackSkipStats
+		wantErr error
+	}{
+		{
+			name: "successfully retrieves most skipped tracks",
+			mock: func(m *ksqltest.MockProvider) {
+				expected := []spotify.TrackSkipStats{
+					{TrackName: "Track1", ArtistName: "Artist1", SkipCount: 8, SkipRate: 0.8},
+					{TrackName: "Track2", ArtistName: "Artist2", SkipCount: 6, SkipRate: 0.6},
+				}
+				m.EXPECT().Query(ctx, gomock.Any(), gomock.Any()).
+					DoAndReturn(func(_ context.Context, records any, _ string, _ ...any) error {
+						*(records.(*[]spotify.TrackSkipStats)) = expected
+						return nil
+					})
+			},
+			want: []spotify.TrackSkipStats{
+				{TrackName: "Track1", ArtistName: "Artist1", SkipCount: 8, SkipRate: 0.8},
+				{TrackName: "Track2", ArtistName: "Artist2", SkipCount: 6, SkipRate: 0.6},
+			},
+		},
+		{
+			name: "handles query error",
+			mock: func(m *ksqltest.MockProvider) {
+				m.EXPECT().Query(ctx, gomock.Any(), gomock.Any()).Return(assert.AnError)
+			},
+			wantErr: assert.AnError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockProvider := ksqltest.NewMockProvider(ctrl)
+			tt.mock(mockProvider)
+
+			sqlite := spotify.NewSQLite(mockProvider)
+			got, err := sqlite.GetMostSkippedTracks(ctx)
+
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				assert.ErrorIs(t, err, tt.wantErr)
+				assert.Nil(t, got)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

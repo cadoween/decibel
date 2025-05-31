@@ -4,17 +4,31 @@ import "github.com/urfave/cli/v3"
 
 var Commands = []*cli.Command{
 	{
-		Name:        "artists",
+		Name:        "top-artists",
 		Usage:       "Get top artists by play time",
 		Description: "Show your most listened artists sorted by total play time",
-		Action:      artistsAction,
+		Action:      topArtistsAction,
 		Flags:       sharedFlags,
 	},
 	{
-		Name:        "tracks",
+		Name:        "top-tracks",
 		Usage:       "Get top tracks by play time",
 		Description: "Show your most played tracks sorted by play count",
-		Action:      tracksAction,
+		Action:      topTracksAction,
+		Flags:       sharedFlags,
+	},
+	{
+		Name:        "top-albums",
+		Usage:       "Get top albums by play count",
+		Description: "Show your most played albums sorted by play count",
+		Action:      topAlbumsAction,
+		Flags:       sharedFlags,
+	},
+	{
+		Name:        "most-skipped-tracks",
+		Usage:       "Get most skipped tracks",
+		Description: "Show tracks that are most frequently skipped (minimum 5 plays)",
+		Action:      mostSkippedTracksAction,
 		Flags:       sharedFlags,
 	},
 }
