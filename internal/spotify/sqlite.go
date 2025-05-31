@@ -9,6 +9,7 @@ import (
 	"github.com/vingarcia/ksql"
 )
 
+//go:generate go tool go.uber.org/mock/mockgen -typed -package ksqltest -destination ksqltest/provider_mock.gen.go github.com/vingarcia/ksql Provider
 type SQLite struct {
 	sqlProvider ksql.Provider
 }

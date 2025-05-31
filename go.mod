@@ -2,11 +2,15 @@ module github.com/cadoween/decibel
 
 go 1.23.4
 
+tool go.uber.org/mock/mockgen
+
 require (
 	github.com/rs/zerolog v1.34.0
+	github.com/stretchr/testify v1.10.0
 	github.com/urfave/cli/v3 v3.3.3
 	github.com/vingarcia/ksql v1.12.3
 	github.com/vingarcia/ksql/adapters/modernc-ksqlite v1.12.3
+	go.uber.org/mock v0.5.2
 )
 
 require (
@@ -18,9 +22,11 @@ require (
 	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
 	golang.org/x/exp v0.0.0-20250408133849-7e4ce0ab07d0 // indirect
+	golang.org/x/mod v0.24.0 // indirect
+	golang.org/x/sync v0.14.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/tools v0.33.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	modernc.org/libc v1.65.7 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
