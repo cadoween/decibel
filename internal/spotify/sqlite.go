@@ -3,6 +3,7 @@ package spotify
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/vingarcia/ksql"
@@ -50,12 +51,6 @@ func (s *SQLite) BulkInsertStreams(ctx context.Context, streams []Stream) error 
 		return fmt.Errorf("s.sqlProvider.Exec: %w", err)
 	}
 
-	// Each stream has 21 parameters, and SQLite has a limit of 999 parameters
-	// So we'll use batches of 45 rows (945 parameters) to stay safely under the
-	// limit.
-	batchSize := 45
-	total := len(streams)
-
 	insertQuery := `
 		INSERT INTO spotify_streams (
 			ts, username, platform, ms_played, conn_country, ip_addr_decrypted,
@@ -66,26 +61,28 @@ func (s *SQLite) BulkInsertStreams(ctx context.Context, streams []Stream) error 
 		) VALUES 
 	`
 
-	for i := 0; i < total; i += batchSize {
-		end := min(i+batchSize, total)
-		batch := streams[i:end]
+	// SQLite has a limit of 999 parameters, each stream has 21 parameters so
+	// we'll use batches of 45 rows (945 parameters) to stay safely under the
+	// limit.
+	for batch := range slices.Chunk(streams, 45) {
 		args := make([]any, 0, len(batch)*21)
 		valueStrings := make([]string, len(batch))
 
-		for j, stream := range batch {
+		for j := range batch {
 			valueStrings[j] = "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 			args = append(args,
-				stream.TS, stream.Username, stream.Platform, stream.MSPlayed, stream.ConnCountry, stream.IPAddrDecrypted,
-				stream.UserAgentDecrypted, stream.MasterMetadataTrackName, stream.MasterMetadataAlbumArtistName,
-				stream.MasterMetadataAlbumAlbumName, stream.SpotifyTrackURI, stream.EpisodeName,
-				stream.EpisodeShowName, stream.SpotifyEpisodeURI, stream.ReasonStart, stream.ReasonEnd,
-				stream.Shuffle, stream.Skipped, stream.Offline, stream.OfflineTimestamp, stream.IncognitoMode,
+				batch[j].TS, batch[j].Username, batch[j].Platform, batch[j].MSPlayed, batch[j].ConnCountry,
+				batch[j].IPAddrDecrypted, batch[j].UserAgentDecrypted, batch[j].MasterMetadataTrackName,
+				batch[j].MasterMetadataAlbumArtistName, batch[j].MasterMetadataAlbumAlbumName,
+				batch[j].SpotifyTrackURI, batch[j].EpisodeName, batch[j].EpisodeShowName,
+				batch[j].SpotifyEpisodeURI, batch[j].ReasonStart, batch[j].ReasonEnd, batch[j].Shuffle,
+				batch[j].Skipped, batch[j].Offline, batch[j].OfflineTimestamp, batch[j].IncognitoMode,
 			)
 		}
 
 		batchQuery := insertQuery + strings.Join(valueStrings, ",")
 		if _, err := s.sqlProvider.Exec(ctx, batchQuery, args...); err != nil {
-			return fmt.Errorf("failed to insert batch %d-%d: %w", i, end, err)
+			return fmt.Errorf("s.sqlProvider.Exec: %w", err)
 		}
 	}
 

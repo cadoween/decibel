@@ -10,6 +10,7 @@ import (
 	ksqlite "github.com/vingarcia/ksql/adapters/modernc-ksqlite"
 
 	"github.com/cadoween/decibel/internal/spotify"
+	"github.com/cadoween/decibel/pkg/iox"
 )
 
 var runFlags = []cli.Flag{
@@ -54,14 +55,14 @@ func runAction(ctx context.Context, c *cli.Command) error {
 	if err != nil {
 		return fmt.Errorf("ksqlite.New: %w", err)
 	}
-	defer func() { _ = db.Close() }()
+	defer iox.Close(db, logger)
 
 	logger.Debug().Str("path", dataDir).Msg("Reading streaming history")
 
 	spotifyJSONReader := spotify.NewJSONReader()
 	streams, err := spotifyJSONReader.ReadStreamsFromFolder(ctx, dataDir)
 	if err != nil {
-		return fmt.Errorf("failed to read JSON files: %w", err)
+		return fmt.Errorf("spotifyJSONReader.ReadStreamsFromFolder: %w", err)
 	}
 	logger.Info().Int("count", len(streams)).Msg("Found streams in history files")
 
@@ -69,7 +70,7 @@ func runAction(ctx context.Context, c *cli.Command) error {
 
 	spotifySQLite := spotify.NewSQLite(db)
 	if err := spotifySQLite.BulkInsertStreams(ctx, streams); err != nil {
-		return fmt.Errorf("failed to import data: %w", err)
+		return fmt.Errorf("spotifySQLite.BulkInsertStreams: %w", err)
 	}
 
 	logger.Info().

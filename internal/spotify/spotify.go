@@ -4,25 +4,25 @@ import "time"
 
 type Stream struct {
 	TS                            time.Time `json:"ts"`
+	SpotifyEpisodeURI             *string   `json:"spotify_episode_uri"`
+	EpisodeShowName               *string   `json:"episode_show_name"`
+	EpisodeName                   *string   `json:"episode_name"`
+	SpotifyTrackURI               string    `json:"spotify_track_uri"`
 	Username                      string    `json:"username"`
-	Platform                      string    `json:"platform"`
-	MSPlayed                      int       `json:"ms_played"`
-	ConnCountry                   string    `json:"conn_country"`
-	IPAddrDecrypted               string    `json:"ip_addr_decrypted"`
 	UserAgentDecrypted            string    `json:"user_agent_decrypted"`
 	MasterMetadataTrackName       string    `json:"master_metadata_track_name"`
 	MasterMetadataAlbumArtistName string    `json:"master_metadata_album_artist_name"`
 	MasterMetadataAlbumAlbumName  string    `json:"master_metadata_album_album_name"`
-	SpotifyTrackURI               string    `json:"spotify_track_uri"`
-	EpisodeName                   *string   `json:"episode_name"`
-	EpisodeShowName               *string   `json:"episode_show_name"`
-	SpotifyEpisodeURI             *string   `json:"spotify_episode_uri"`
-	ReasonStart                   string    `json:"reason_start"`
+	ConnCountry                   string    `json:"conn_country"`
 	ReasonEnd                     string    `json:"reason_end"`
+	Platform                      string    `json:"platform"`
+	IPAddrDecrypted               string    `json:"ip_addr_decrypted"`
+	ReasonStart                   string    `json:"reason_start"`
+	MSPlayed                      int       `json:"ms_played"`
+	OfflineTimestamp              int64     `json:"offline_timestamp"`
 	Shuffle                       bool      `json:"shuffle"`
 	Skipped                       bool      `json:"skipped"`
 	Offline                       bool      `json:"offline"`
-	OfflineTimestamp              int64     `json:"offline_timestamp"`
 	IncognitoMode                 bool      `json:"incognito_mode"`
 }
 

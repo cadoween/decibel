@@ -5,6 +5,26 @@ linters:
   enable:
     - wrapcheck
     - prealloc
+    - copyloopvar
+    - dupl
+    - errcheck
+    - errorlint
+    - exhaustive
+    - funcorder
+    # - goconst
+    - gocritic
+    - gosec
+    - govet
+    - iface
+    - inamedparam
+    - interfacebloat
+    # - lll
+    - makezero
+    - misspell
+    # - mnd
+    - musttag
+    - nestif
+    - revive
   settings:
     wrapcheck:
       extra-ignore-sigs:
@@ -13,6 +33,92 @@ linters:
       simple: true
       range-loops: true
       for-loops: true
+    copyloopvar:
+      check-alias: true
+    dupl:
+      threshold: 100
+    errcheck:
+      check-type-assertions: false
+      check-blank: true
+      disable-default-exclusions: false
+    errorlint:
+      errorf: true
+      errorf-multi: true
+      asserts: true
+      comparison: true
+    exhaustive:
+      check:
+        - switch
+        - map
+      default-signifies-exhaustive: false
+      package-scope-only: false
+      default-case-required: true
+    funcorder:
+      constructor: true
+      struct-method: true
+    # goconst:
+    #   min-len: 3
+    #   min-occurrences: 2
+    #   match-constant: true
+    #   numbers: true
+    #   ignore-calls: false
+    #   # Exclude strings matching the given regular expression.
+    #   # Default: ""
+    #   ignore-string-values:
+    #     - "%w"
+    #   # Detects constants with identical values.
+    #   # Default: false
+    #   find-duplicates: true
+    #   # Evaluates of constant expressions like Prefix + "suffix".
+    #   # Default: false
+    #   eval-const-expressions: true
+    gocritic:
+      enable-all: true
+    govet:
+      enable-all: true
+    iface:
+      enable:
+        - identical # Identifies interfaces in the same package that have identical method sets.
+        - unused # Identifies interfaces that are not used anywhere in the same package where the interface is defined.
+        - opaque # Identifies functions that return interfaces, but the actual returned value is always a single concrete implementation.
+    interfacebloat:
+      max: 5
+    makezero:
+      always: false
+    nestif:
+      min-complexity: 4
+    revive:
+      severity: error
+      enable-all-rules: true
+      rules:
+        - name: package-comments
+          severity: warning
+          disabled: true
+          exclude: [""]
+        - name: line-length-limit
+          severity: warning
+          disabled: true
+          exclude: [""]
+        - name: exported
+          severity: warning
+          disabled: true
+          exclude: [""]
+        - name: add-constant
+          severity: warning
+          disabled: true
+          exclude: [""]
+        - name: unchecked-type-assertion
+          severity: warning
+          disabled: true
+          exclude: [""]
+        - name: cognitive-complexity
+          severity: warning
+          disabled: true
+          exclude: [""]
+        - name: cyclomatic
+          severity: warning
+          disabled: true
+          exclude: [""]
 
 formatters:
   enable:

@@ -12,8 +12,10 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/cadoween/decibel/pkg/ext"
 	"github.com/rs/zerolog"
+
+	"github.com/cadoween/decibel/pkg/ext"
+	"github.com/cadoween/decibel/pkg/iox"
 )
 
 type JSONReader struct {
@@ -36,27 +38,13 @@ func (r *JSONReader) ReadStreamsFromFolder(ctx context.Context, folderPath strin
 	streamsChan := make(chan []Stream)
 	errChan := make(chan error)
 
-	var (
-		wg        sync.WaitGroup
-		jsonFiles []string
-	)
-
-	err := filepath.WalkDir(folderPath, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if !d.IsDir() && filepath.Ext(path) == ext.JSON {
-			jsonFiles = append(jsonFiles, path)
-		}
-
-		return nil
-	})
+	jsonFiles, err := r.findJSONFiles(folderPath)
 	if err != nil {
-		return nil, fmt.Errorf("filepath.WalkDir: %w", err)
+		return nil, fmt.Errorf("r.findJSONFiles: %w", err)
 	}
 	logger.Debug().Int("files_found", len(jsonFiles)).Msg("Found JSON files to process")
 
+	var wg sync.WaitGroup
 	for _, path := range jsonFiles {
 		wg.Add(1)
 		go func(filePath string) {
@@ -65,7 +53,6 @@ func (r *JSONReader) ReadStreamsFromFolder(ctx context.Context, folderPath strin
 			case <-ctx.Done():
 				return
 			default:
-
 				streams, err := r.readStreamsFromFile(ctx, filePath)
 				if err != nil {
 					select {
@@ -73,12 +60,11 @@ func (r *JSONReader) ReadStreamsFromFolder(ctx context.Context, folderPath strin
 					case <-ctx.Done():
 					}
 					return
-
 				}
 
 				select {
 				case streamsChan <- streams:
-					logger.Debug().
+					zerolog.Ctx(ctx).Debug().
 						Str("file", filepath.Base(filePath)).
 						Int("streams_count", len(streams)).
 						Msg("Processed file")
@@ -109,20 +95,39 @@ func (r *JSONReader) ReadStreamsFromFolder(ctx context.Context, folderPath strin
 				return allStreams, nil
 			}
 			allStreams = append(allStreams, streams...)
-
 		}
 	}
+}
+
+func (*JSONReader) findJSONFiles(folderPath string) ([]string, error) {
+	var jsonFiles []string
+	err := filepath.WalkDir(folderPath, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !d.IsDir() && filepath.Ext(path) == ext.JSON {
+			jsonFiles = append(jsonFiles, path)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("filepath.WalkDir: %w", err)
+	}
+
+	return jsonFiles, nil
 }
 
 func (r *JSONReader) readStreamsFromFile(ctx context.Context, path string) ([]Stream, error) {
 	logger := zerolog.Ctx(ctx)
 	logger.Debug().Str("file", filepath.Base(path)).Msg("Reading file")
 
-	file, err := os.Open(path)
+	file, err := os.Open(filepath.Clean(path))
 	if err != nil {
 		return nil, fmt.Errorf("os.Open: %w", err)
 	}
-	defer func() { _ = file.Close() }()
+	defer iox.Close(file, logger)
 
 	reader := r.bufferPool.Get().(*bufio.Reader)
 	reader.Reset(file)
