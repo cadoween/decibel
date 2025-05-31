@@ -1,0 +1,42 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - wrapcheck
+    - prealloc
+  settings:
+    wrapcheck:
+      extra-ignore-sigs:
+        - .Err( # ignore context errors
+    prealloc:
+      simple: true
+      range-loops: true
+      for-loops: true
+
+formatters:
+  enable:
+    - gci
+    - gofmt
+    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - localmodule
+    gofmt:
+      simplify: true
+      rewrite-rules:
+        - pattern: "interface{}"
+          replacement: "any"
+        - pattern: "a[b:len(a)]"
+          replacement: "a[b:]"
+    gofumpt:
+      extra-rules: true
+
+run:
+  timeout: 2m
+
+issues:
+  fix: true
