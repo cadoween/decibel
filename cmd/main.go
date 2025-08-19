@@ -13,7 +13,7 @@ import (
 func main() {
 	cmd := &cli.Command{
 		Name:        "decibel",
-		Usage:       "Analyze and manage your music listening history",
+		Usage:       "Analyze and manage your music listening history (test)",
 		Description: "A command-line tool for processing and analyzing music streaming history data, providing insights into your listening habits across different platforms.",
 		Commands: []*cli.Command{
 			{
